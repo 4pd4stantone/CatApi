@@ -102,7 +102,7 @@ axios.defaults.headers.common["x-api-key"] = API_KEY;
 async function initialLoad() {
   const response = await axios.get("/breeds");
   const breedData = response.data;
-  // console.log(breedData);
+  console.log(breedData);
 
   breedData.forEach((breed) => {
     const options = document.createElement("option");
@@ -121,7 +121,7 @@ breedSelect.addEventListener("change", retrieveInfo);
 
 async function retrieveInfo() {
   const breedId = breedSelect.value;
-  console.log(breedId);
+  // console.log(breedId);
   const response = await axios.get("/images/search", {
     params: {
       breed_ids: breedId,
@@ -131,17 +131,18 @@ async function retrieveInfo() {
     onDownloadProgress: updateProgress,
   });
   let data = response.data;
-  console.log(response.status);
+  // console.log(response.status);
   clear();
+  let hasImage = true;
+  
   for (let i = 0; i < data.length; i++) {
-    console.log(data);
-    const img = document.createElement("img");
-    console.log(data[i].url);
+    // console.log(data);
+    // console.log(data[i].url);
     const carouselItems = createCarouselItem(data[i].url, breedId, data[i].id);
 
-    let a = data[i].breeds[0].adaptability;
-    let c = data[i].breeds[0].child_friendly;
-    let d = data[i].breeds[0].description;
+    let a = data[0].breeds[0].adaptability;
+    let c = data[0].breeds[0].child_friendly;
+    let d = data[0].breeds[0].description;
     infoDump.innerHTML = `<p>Adaptability: ${a}</p> <p>Child Friendly: ${c}</p> <p>Description: ${d}</p>`;
     appendCarousel(carouselItems);
   }
@@ -169,9 +170,9 @@ axios.interceptors.response.use(
     response.config.metadata.durationInMS =
       response.config.metadata.endTime - response.config.metadata.startTime;
 
-    console.log(
-      `Request took ${response.config.metadata.durationInMS} milliseconds.`
-    );
+    // console.log(
+    //   `Request took ${response.config.metadata.durationInMS} milliseconds.`
+    // );
     document.body.style.cursor = "default";
     return response;
   },
@@ -207,16 +208,19 @@ async function updateProgress(progEvt) {
   if (progEvt.lengthComputable) {
     const percentCompleted = Math.round((progEvt.loaded * 100) / progEvt.total);
     progressBar.style.width = percentCompleted;
-    console.log();
+    console.log(progEvt);
   } else {
     progressBar.style.width = "100%";
+    // console.log('100%')
   }
 }
+
 
 /**
  * 7. As a final element of progress indication, add the following to your axios interceptors:
  * - In your request interceptor, set the body element's cursor style to "progress."
  * - In your response interceptor, remove the progress cursor style from the body element.
+ * I set it to default instead.
  */
 
 /**
@@ -232,8 +236,26 @@ async function updateProgress(progEvt) {
  */
 
 export async function favourite(imgId) {
-  let fav = await axios.post("/favourites", { image_id: imgId });
-  console.log(fav.data.id);
+  const response = await axios.get('/favourites');
+  // console.log(response)
+  // console.log(imgId)
+  const favourites = response.data;
+  // console.log(favourites);
+  let exists = false;
+  for (let fav of favourites) {
+    if (imgId === fav.image_id) {
+      let deletedFav = await axios.delete(`/favourites/${fav.id}`);
+      // console.log(deletedFav);  
+      exists = true; 
+      break;
+    } 
+  }
+  if (!exists) {
+    let newFav =  await axios.post('/favourites', {image_id: imgId});
+    // console.log(newFav)
+    // console.log(favourites);
+  }
+  
 }
 
 /**
@@ -245,7 +267,29 @@ export async function favourite(imgId) {
  *    If that isn't in its own function, maybe it should be so you don't have to
  *    repeat yourself in this section.
  */
-getFavouritesBtn.addEventListener("click", favourite);
+getFavouritesBtn.addEventListener("click", getFavourites);
+
+async function getFavourites(){
+  clear()
+  const response = await axios.get('/favourites');
+  console.log(response);
+  const favourites = response.data;
+  let data = response.data;
+  console.log(data);
+  infoDump.innerHTML = ""
+  loadCarousel(data)
+  start();
+}
+
+async function loadCarousel(data){
+  for (let i = 0; i < data.length; i++) {
+    // console.log(data);
+    // console.log(data[i].url);
+    const carouselItems = createCarouselItem(data[i].image.url, data[i].image_id, data[i].id);
+    appendCarousel(carouselItems);
+  }
+}
+
 /**
  * 10. Test your site, thoroughly!
  * - What happens when you try to load the Malayan breed?
