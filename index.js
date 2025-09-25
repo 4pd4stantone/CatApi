@@ -103,13 +103,21 @@ async function initialLoad() {
   const response = await axios.get("/breeds");
   const breedData = response.data;
   console.log(breedData);
-
+  
+  let hasImage = false;
   breedData.forEach((breed) => {
+   
+    if (breed.image === undefined) {
+      console.log(breed);
+      return;
+    } else {
     const options = document.createElement("option");
     // console.log(options)
+    
     breedSelect.appendChild(options);
     options.value = breed.id;
     options.textContent = breed.name;
+    }
   });
 
   retrieveInfo();
@@ -133,8 +141,7 @@ async function retrieveInfo() {
   let data = response.data;
   // console.log(response.status);
   clear();
-  let hasImage = true;
-  
+
   for (let i = 0; i < data.length; i++) {
     // console.log(data);
     // console.log(data[i].url);
@@ -148,7 +155,7 @@ async function retrieveInfo() {
   }
   start();
 }
-
+// createCarouselItem(imgSrc, imgAlt, imgId) 
 /**
  * 5. Add axios interceptors to log the time between request and response to the console.
  * - Hint: you already have access to code that does this!
@@ -283,12 +290,15 @@ async function getFavourites(){
 
 async function loadCarousel(data){
   for (let i = 0; i < data.length; i++) {
+     const breedId = breedSelect.value;
     // console.log(data);
     // console.log(data[i].url);
-    const carouselItems = createCarouselItem(data[i].image.url, data[i].image_id, data[i].id);
+    
+    const carouselItems = createCarouselItem(data[i].image.url, breedId, data[i].id);
     appendCarousel(carouselItems);
   }
 }
+// createCarouselItem(imgSrc, imgAlt, imgId) 
 
 /**
  * 10. Test your site, thoroughly!
@@ -297,3 +307,5 @@ async function loadCarousel(data){
  * - Test other breeds as well. Not every breed has the same data available, so
  *   your code should account for this.
  */
+
+//2 breeds do not contain images: European Burmese & Malayn. Added and if statement in the initalLoad() that skips any breed that is missing images.
